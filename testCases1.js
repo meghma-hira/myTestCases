@@ -47,14 +47,13 @@ describe('1. checkDeliveryAvailability for a given PINCODE', function () {
      };
 
      //console.log(request.data.pincode.length);
-     assert.equal(request.data.pincode.length, 6, "PINCODE is INVALID")
+     assert.equal(request.data.pincode.length, 6, "PINCODE is INVALID");
 
 
      storehippo.call("checkDeliveryAvailability", request, function (err, response) {
      if (err) throw err;
      //console.log(response);
      var res = JSON.parse(response.data);
-     console.log("SERVICE AVAILABLE at ", request.data.pincode, "is: ", res.data);
 
      assert.equal(200, response.status, "ERROR");
 
