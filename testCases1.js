@@ -11,7 +11,8 @@ var assert = require('assert');
 
 var storehippo = require('storehippo-nodejs-sdk')({
     storename: "atishaydemo2",
-    access_key: "admin"
+    access_key: "admin",
+    version: "1.0"
 });
 
 //todo test cases for checkdeliveryavailbility
@@ -35,9 +36,7 @@ describe('1. checkDeliveryAvailability for a given PINCODE', function () {
         done();
     });
 
-
-    //When version = 1.0
-    /*it('Checking deliveryAvailability when version = 1.0', function (done) {
+    it('Checking deliveryAvailability', function (done) {
      prompt.start();
 
      prompt.get(['pincode'], function (err, result) {
@@ -66,34 +65,7 @@ describe('1. checkDeliveryAvailability for a given PINCODE', function () {
      });
      });
 
-     });*/
-
-    //WHEN version is not SET
-    it('Checking deliveryAvailability for given PINCODE', function (done) {
-        prompt.start();
-
-        prompt.get(['pincode'], function (err, result) {
-
-            assert.equal(result.pincode.length, 6, "PINCODE is INVALID");
-
-            var request = {
-                entity: "ms.fulfillment",
-                data: {pincode: result.pincode}
-            };
-            storehippo.call("checkDeliveryAvailability", request, function (err, response) {
-                if (err) throw err;
-
-                //console.log("SERVICE AVAILABLE at ", request.data.pincode, "is: ", response.data);
-
-                assert.equal(response.status, 200, "response.status != 200");
-                assert.equal(response.data, "both", "COD SERVICE NOT AVAILABLE");
-
-                done();
-
-            });
-        });
-
-    });
+     });
 });
 
 
@@ -124,7 +96,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
             assert.equal(response.status, 200, "storehippo.list on ms.order, response.status != 200");
 
             var orderList = JSON.parse(response.data);
-            order = orderList.records[0];
+            order = orderList.data[0];
 
             getadd = {
                 entity: "ms.orders"
@@ -135,7 +107,9 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 assert.equal(res.status, 200, "getAddresses on ms.orders, response.status != 200");
 
-                pickup = JSON.parse(res.data);
+                var pickup_res = JSON.parse(res.data);
+
+                pickup = pickup_res.data;
 
                 done();
             });
@@ -167,8 +141,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -181,7 +157,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -189,8 +165,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -203,11 +179,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -246,8 +222,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -260,7 +238,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -268,8 +246,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -282,11 +260,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -325,8 +303,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -339,7 +319,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -347,8 +327,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -361,11 +341,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -404,8 +384,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -418,7 +400,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -426,8 +408,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -440,11 +422,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -483,8 +465,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -497,7 +481,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -505,8 +489,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -519,11 +503,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -562,8 +546,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -576,7 +562,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -584,8 +570,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -598,11 +584,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -641,8 +627,10 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
         storehippo.update(updateFulfillment, function (err, res) {
             if (err) throw err;
 
+            var update_msg = JSON.parse(res.data);
+
             assert.equal(res.status, 200, "storehippo.update on ms.fulfillment_methods, response.status != 200");
-            assert.equal(res.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
+            assert.equal(update_msg.data, 'updated successfully', "Services in ms.fulfillment_methods NOT updated");
 
             var getmethod = {
                 entity: "ms.fulfillment"
@@ -655,7 +643,7 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                 var methods = JSON.parse(res.data);
 
-                methods[0].settings.services.forEach(function (item) {
+                methods.data[0].settings.services.forEach(function (item) {
                     assert.notEqual(services.indexOf(item), -1, "services != methods[0].settings.services");
                 });
 
@@ -663,8 +651,8 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
                     entity: "ms.fulfillment",
 
                     data: {
-                        level: methods[0].shipping_level,
-                        method: methods[0].provider,
+                        level: methods.data[0].shipping_level,
+                        method: methods.data[0].provider,
                         orderDetail: order,
                         pickupAddress: pickup[0]
                     }
@@ -677,11 +665,11 @@ describe('2. ms.fulfillment Test Cases for different combination of services', f
 
                     var rates = JSON.parse(res.data);
 
-                    assert.notEqual(rates.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
+                    assert.notEqual(rates.data.message, "Logistics service not available !!!", "Method: getRates, response.data.message = Logistics service not available !!!");
 
                     var available_rate_titles = [];
 
-                    rates.forEach(function(item){
+                    rates.data.forEach(function(item){
 
                         available_rate_titles.push(item.title.toLowerCase()); //creating array of available rate_title
                     });
@@ -736,14 +724,15 @@ describe('3. Test Cases for getting RATES when DELIVERY at PINCODES of Shipping 
         };
         var limit = 9;
 
-        storehippo.list(getOrder, function(err, response) {
+        storehippo.list(getOrder, function (err, response) {
             if (err) throw err;
 
-            assert.equal(response.status, 200, "storehippo.list on ms.orders, response.status != 200");
+            assert.equal(response.status, 200, "storehippo.list on ms.order, response.status != 200");
 
             var orderList = JSON.parse(response.data);
+            order = orderList.data[0];
 
-            var getadd = {
+            getadd = {
                 entity: "ms.orders"
             };
 
@@ -752,7 +741,9 @@ describe('3. Test Cases for getting RATES when DELIVERY at PINCODES of Shipping 
 
                 assert.equal(res.status, 200, "getAddresses on ms.orders, response.status != 200");
 
-                var pickup = JSON.parse(res.data);
+                var pickup_res = JSON.parse(res.data);
+
+                var pickup = pickup_res.data;
 
                 var getmethod = {
                     entity: "ms.fulfillment"
@@ -765,13 +756,13 @@ describe('3. Test Cases for getting RATES when DELIVERY at PINCODES of Shipping 
 
                     var methods = JSON.parse(res.data);
 
-                    orderList.records.forEach(function(item, index){
+                    orderList.data.forEach(function(item, index){
 
                         var getrate = {
                             entity: "ms.fulfillment",
                             data: {
-                                level: methods[0].shipping_level,
-                                method: methods[0].provider,
+                                level: methods.data[0].shipping_level,
+                                method: methods.data[0].provider,
                                 orderDetail: item,
                                 pickupAddress: pickup[0]
                             }
@@ -786,8 +777,10 @@ describe('3. Test Cases for getting RATES when DELIVERY at PINCODES of Shipping 
                         storehippo.call("checkDeliveryAvailability", request, function(err, response) {
                             if (err) throw err;
 
+                            var checkDeliveryAvailability = JSON.parse(response.data);
+
                             assert.equal(response.status, 200, "checkDeliveryAvailability on PINCODE, response.status != 200");
-                            assert.equal(response.data, "both", "COD SERVICE NOT AVAILABLE");
+                            assert.equal(checkDeliveryAvailability.data, "both", "COD SERVICE NOT AVAILABLE");
 
 
                             storehippo.call("getRates", getrate, function (err, res) {
